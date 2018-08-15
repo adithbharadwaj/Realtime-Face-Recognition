@@ -33,9 +33,9 @@ def prepare_database():
 
     print(database.keys())
 
+
     return database
 
-# A function to calculate the triplet loss.
 def triplet_loss(y_true, y_pred, alpha = 0.2):
     """
     Implementation of the triplet loss as defined by formula.
@@ -45,7 +45,9 @@ def triplet_loss(y_true, y_pred, alpha = 0.2):
     negative -- the encodings for the negative images, of shape (None, 128)
     
     """
+    
     anchor, positive, negative = y_pred[0], y_pred[1], y_pred[2]
+    
 
     pos_dist = tf.reduce_sum(tf.square(tf.subtract(anchor, positive)))
     neg_dist = tf.reduce_sum(tf.square(tf.subtract(anchor, negative)))
@@ -53,10 +55,12 @@ def triplet_loss(y_true, y_pred, alpha = 0.2):
 
     loss = tf.maximum(tf.reduce_mean(basic_loss), 0.0)
 
+    
     return loss
 
 # function to recognize the face of a person using the webcam in OpenCV.
 def webcam_face_recognizer(database):
+   
     """
     Runs a loop that extracts images from the computer's webcam and determines whether or not
     it contains the face of a person in our database.
@@ -67,16 +71,16 @@ def webcam_face_recognizer(database):
     cv2.namedWindow("preview")
     vc = cv2.VideoCapture(0)
 
-    face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml') # haar cascade model.
+    face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
     
-    # loop runs until the exc. key is pressed.
     while vc.isOpened():
         _, frame = vc.read()
         img = frame
 
         # We do not want to detect a new identity while the program is in the process of identifying another person
         if ready_to_detect_identity:
-            img = process_frame(img, frame, face_cascade)     
+            img = process_frame(img, frame, face_cascade)    
+        
         
         key = cv2.waitKey(100)
         cv2.imshow("preview", img)
@@ -85,7 +89,6 @@ def webcam_face_recognizer(database):
             break
     cv2.destroyWindow("preview")
 
-# function to process a given frame.
 def process_frame(img, frame, face_cascade):
     """
     Determine whether the current frame contains the faces of people from our database
@@ -104,21 +107,14 @@ def process_frame(img, frame, face_cascade):
 
         img = cv2.rectangle(frame,(x1, y1),(x2, y2),(255,0,0),2)
 
-        identity = find_identity(frame, x1, y1, x2, y2) # finds the person's identity
+        identity = find_identity(frame, x1, y1, x2, y2)
 
-        # adding the person's name to the top left corner of our bounding box.
         img = cv2.putText(frame, identity, (x1, y1), cv2.FONT_HERSHEY_COMPLEX, 1, (0, 0, 0), 3)
 
         if identity is not None:
             identities.append(identity)
 
-        if identities != []:
-            cv2.imwrite('example.png',img)
-
-        ready_to_detect_identity = False
-
     return img
-
 
 def find_identity(frame, x1, y1, x2, y2):
     """
@@ -145,32 +141,34 @@ def recognize(image, database, model):
         # Compute L2 distance between the target "encoding" and the current "emb" from the database.
         dist = np.linalg.norm(db_enc - encoding)
 
+        #print('distance for %s is %s' %(name, dist))
+
         # If this distance is less than the min_dist, then set min_dist to dist, and identity to name
         if dist <= min_dist:
             min_dist = dist
             identity = name
     
-    if min_dist > 0.52:
+    if min_dist > 0.6:
         return None
     else:
-        print(str(identity))    
-        return str(identity)        
+       	print(str(identity))	
+       	return str(identity)		
 
-# driver program. 
+
+
 if __name__ == '__main__':
 
 
-    FRmodel = faceRecoModel(input_shape=(3, 96, 96)) # inception model
+	FRmodel = faceRecoModel(input_shape=(3, 96, 96))
 
-    FRmodel.compile(optimizer = 'adam', loss = triplet_loss, metrics = ['accuracy'])
-    
-    # loading pre-trained weights.
-    load_weights_from_FaceNet(FRmodel) 
+	FRmodel.compile(optimizer = 'adam', loss = triplet_loss, metrics = ['accuracy'])
+	load_weights_from_FaceNet(FRmodel)
 
-    # get a list of images in database.
-    database = prepare_database()
-    # recognize the face.
-    webcam_face_recognizer(database)
-    
+	database = prepare_database()
+	webcam_face_recognizer(database)
+	
+
+
+
 
 
